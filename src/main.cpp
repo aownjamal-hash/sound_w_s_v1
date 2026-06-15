@@ -3,7 +3,7 @@
 #include "web_page.h"
 #include <WebServer.h>
 #include <TimeLib.h>
-
+setup
 // تعريف الدبابيس
 const int SENSOR_PIN = 34;
 const int BUTTON_PIN = 13;
@@ -89,11 +89,38 @@ void addToLog(String event);   // إضافة دالة السجل البسيطة
 // ========== سجل بسيط (بدون تخزين دائم) ==========
 void addToLog(String event) {
     String timestamp = getCurrentTimeString();
-    String entry = timestamp + " - " + event;
-    Serial.println("[LOG] " + entry);
-    // لا نخزن في Preferences لتجنب تعقيدات الكتابة
+    String entry = timestamp + " - " + event + "\n";
+    
+    Serial.print("[LOG] " + entry);
+
+    // Append to Flash File
+    File file = LITTLEFS.open("/events.txt", FILE_APPEND);
+    if(file) {
+        if(file.print(entry)) {
+            // Success
+        }
+        file.close();
+    } else {
+        Serial.println("[LOG] Failed to open log file");
+    }
 }
 
+void handleViewLogs() {
+    File file = LITTLEFS.open("/events.txt", FILE_READ);
+    if(!file) {
+        server.send(200, "text/plain", "No logs found.");
+        return;
+    }
+    server.streamFile(file, "text/plain");
+    file.close();
+}
+
+// In setup():
+server.on("/viewlogs", HTTP_GET, handleViewLogs);
+server.on("/clearlogs", HTTP_POST, []() {
+    LITTLEFS.remove("/events.txt");
+    server.send(200, "text/plain", "Logs cleared.");
+});
 // ========== دوال LED الأساسية ==========
 void blinkStatus(int times, int duration) {
     for (int i = 0; i < times; i++) {
@@ -632,6 +659,10 @@ void setup() {
     Serial.println("GPIO13: toggle SMS mode / double press calibrate");
     Serial.println("GPIO0: reinitialize modem");
     Serial.println("GPIO14: toggle WiFi | GPIO27: WiFi status LED");
+
+    if(!LITTLEFS.begin(true)) {
+        Serial.println("LittleFS Mount Failed");
+    }
 }
 
 // ========== الحلقة الرئيسية ==========
