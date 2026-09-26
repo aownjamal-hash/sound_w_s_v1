@@ -366,7 +366,7 @@ void loadStoredSettings() {
     preferences.begin("sound_config", true);
     idleBase = preferences.getInt("storedBase", 2000);
     threshold = preferences.getInt("storedThresh", 2150);
-    myPhoneNumber = preferences.getString("phone", "+967772274423");
+    myPhoneNumber = preferences.getString("phone", "+967000000000");
     messageText = preferences.getString("msg", "");
     preferences.end();
     Serial.printf("[LOAD] Base=%d Th=%d\n", idleBase, threshold);
